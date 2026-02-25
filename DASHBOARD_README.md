@@ -105,3 +105,7 @@ The dashboard wraps `fail2ban-client` commands and parses their output. It does 
 ## License
 
 GPL-2.0 — same as the original fail2ban project.
+
+---
+
+Developed by **[KCCS](https://kccsonline.com)** — [kccsonline.com](https://kccsonline.com)
