@@ -124,3 +124,11 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with
 Fail2Ban; if not, write to the Free Software Foundation, Inc., 51 Franklin
 Street, Fifth Floor, Boston, MA 02110, USA
+
+---
+
+## Fork Maintainer
+
+This fork is maintained by **[KCCS](https://kccsonline.com)** with custom web UI enhancements and monitoring integrations.
+
+*[kccsonline.com](https://kccsonline.com)*
