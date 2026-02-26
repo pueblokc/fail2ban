@@ -1,8 +1,133 @@
-                         __      _ _ ___ _               
-                        / _|__ _(_) |_  ) |__  __ _ _ _  
-                       |  _/ _` | | |/ /| '_ \/ _` | ' \ 
-                       |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v1.1.0.dev1            20??/??/??
+# fail2ban Web Dashboard — Enhanced by KCCS
+
+> A self-hosted security monitoring dashboard for [fail2ban](https://github.com/fail2ban/fail2ban) with real-time jail stats, ban timeline, one-click unban, and remote SSH monitoring.
+
+![fail2ban Dashboard](docs/screenshots/dashboard.png)
+
+## What's New in This Fork
+
+- **Web Dashboard** -- See all jails, banned IPs, and attack timelines from your browser
+- **One-click ban/unban** -- Manage bans without touching the CLI
+- **Top offenders view** -- Most-banned IPs with country codes and affected jails
+- **24h ban timeline** -- Visual chart of ban activity over the last 24 hours
+- **Remote monitoring** -- Monitor fail2ban on remote servers via SSH
+- **Demo mode** -- Works without fail2ban installed for testing and development
+- **REST API** -- Full programmatic access to all dashboard data
+
+## Quick Start
+
+### On your Linux server (with fail2ban installed)
+
+```bash
+git clone https://github.com/pueblokc/fail2ban.git
+cd fail2ban
+pip install fastapi "uvicorn[standard]"
+
+python -m uvicorn fail2ban_web.app:app --host 0.0.0.0 --port 8502
+# Open http://your-server:8502
+```
+
+### Demo mode (no fail2ban needed)
+
+```bash
+F2B_DEMO=true python -m uvicorn fail2ban_web.app:app --host 0.0.0.0 --port 8502
+# Open http://localhost:8502
+```
+
+### Remote monitoring (via SSH)
+
+```bash
+F2B_SSH_HOST=192.168.1.100 F2B_SSH_USER=root F2B_SSH_KEY=~/.ssh/id_rsa \
+  python -m uvicorn fail2ban_web.app:app --host 0.0.0.0 --port 8502
+```
+
+## Screenshots
+
+| Dashboard Overview | Expanded Jail Details |
+|:---:|:---:|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Jail Expanded](docs/screenshots/jail-expanded.png) |
+
+## Features
+
+### All Jails at a Glance
+See banned count, failed attempts, and totals per jail -- all on one screen with auto-refresh every 30 seconds.
+
+### Expandable Jail Details
+Click any jail to see all currently banned IPs with their ban times and metadata.
+
+### One-Click Ban/Unban
+Remove bans or add manual bans for any IP in any jail directly from the dashboard. No SSH required.
+
+### Top Offenders
+Identify the most-banned IPs across all jails, with country code resolution and affected jail counts.
+
+### 24h Ban Timeline
+Visual chart showing ban activity over the last 24 hours. Spot attack patterns at a glance.
+
+### Demo Mode
+Auto-detects whether fail2ban is installed. Falls back to realistic demo data for testing and development.
+
+### Remote Monitoring
+Monitor fail2ban on any remote server via SSH key authentication. Run the dashboard anywhere, monitor everywhere.
+
+## API Reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | Web Dashboard |
+| `GET` | `/api/status` | All jails status + timeline + top offenders |
+| `GET` | `/api/jail/{name}` | Specific jail details |
+| `POST` | `/api/jail/{name}/ban/{ip}` | Ban an IP in a jail |
+| `POST` | `/api/jail/{name}/unban/{ip}` | Unban an IP from a jail |
+| `GET` | `/api/log` | Ban/unban action log |
+| `GET` | `/api/mode` | Check if running in demo or live mode |
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `F2B_PORT` | `8502` | Server port |
+| `F2B_DEMO` | `auto` | `auto` / `true` / `false` -- auto-detects fail2ban |
+| `F2B_CLIENT` | `fail2ban-client` | Path to fail2ban-client binary |
+| `F2B_USE_SUDO` | `true` | Use sudo for fail2ban-client commands |
+| `F2B_SSH_HOST` | _(empty)_ | SSH host for remote monitoring |
+| `F2B_SSH_USER` | `root` | SSH username |
+| `F2B_SSH_KEY` | _(empty)_ | SSH private key path |
+| `F2B_DB_PATH` | `./f2b_dashboard.db` | SQLite database for action logs |
+
+## Architecture
+
+```
+fail2ban_web/
+├── app.py          # FastAPI backend (CLI wrapper + demo mode)
+├── __init__.py
+└── static/
+    └── index.html  # Single-file dark security dashboard
+```
+
+The dashboard wraps `fail2ban-client` commands and parses their output. It does NOT modify fail2ban configuration -- only reads status and issues ban/unban commands through the official client.
+
+## Requirements
+
+- Python 3.9+
+- `fastapi` and `uvicorn`
+- fail2ban installed on the target server (or use demo mode)
+- Root/sudo access for fail2ban-client (or SSH access to remote server)
+
+---
+
+## Original Project
+
+<details>
+<summary>Click to expand original fail2ban README</summary>
+
+```
+                     __      _ _ ___ _
+                    / _|__ _(_) |_  ) |__  __ _ _ _
+                   |  _/ _` | | |/ /| '_ \/ _` | ' \
+                   |_| \__,_|_|_/___|_.__/\__,_|_||_|
+                   v1.1.0.dev1            20??/??/??
+```
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
@@ -17,17 +142,13 @@ Though Fail2Ban is able to reduce the rate of incorrect authentication
 attempts, it cannot eliminate the risk presented by weak authentication.
 Set up services to use only two factor, or public/private authentication
 mechanisms if you really want to protect services.
-     
-<img src="http://www.worldipv6launch.org/wp-content/themes/ipv6/downloads/World_IPv6_launch_logo.svg" style="height:52pt;"/> | Since v0.10 fail2ban supports the matching of IPv6 addresses.
-------|------
 
 This README is a quick introduction to Fail2Ban. More documentation, FAQ, and HOWTOs
 to be found on fail2ban(1) manpage, [Wiki](https://github.com/fail2ban/fail2ban/wiki),
 [Developers documentation](https://fail2ban.readthedocs.io/)
 and the website: https://www.fail2ban.org
 
-Installation:
--------------
+### Installation
 
 Fail2Ban is likely already packaged for your Linux distribution and [can be installed with a simple command](https://github.com/fail2ban/fail2ban/wiki/How-to-install-fail2ban-packages).
 
@@ -37,98 +158,27 @@ Required:
 - [Python >= 3.5](https://www.python.org) or [PyPy3](https://pypy.org)
 - python-setuptools (or python3-setuptools) for installation from source
 
-Optional:
-- [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify), may require:
-  * Linux >= 2.6.13
-- [systemd >= 204](http://www.freedesktop.org/wiki/Software/systemd) and python bindings:
-  * [python-systemd package](https://www.freedesktop.org/software/systemd/python-systemd/index.html)
-- [dnspython](http://www.dnspython.org/)
-- [pyasyncore](https://pypi.org/project/pyasyncore/) and [pyasynchat](https://pypi.org/project/pyasynchat/) (normally bundled-in within fail2ban, for python 3.12+ only)
-
-
 To install:
-
-    tar xvfj fail2ban-master.tar.bz2
-    cd fail2ban-master
-    sudo python setup.py install
-   
-Alternatively, you can clone the source from GitHub to a directory of your choice, and do the install from there. Pick the correct branch, for example, master or 0.11
 
     git clone https://github.com/fail2ban/fail2ban.git
     cd fail2ban
-    sudo python setup.py install 
-    
-This will install Fail2Ban into the python library directory. The executable
-scripts are placed into `/usr/bin`, and configuration in `/etc/fail2ban`.
+    sudo python setup.py install
 
-Fail2Ban should be correctly installed now. Just type:
-
-    fail2ban-client -h
-
-to see if everything is alright. You should always use fail2ban-client and
-never call fail2ban-server directly.
-You can verify that you have the correct version installed with 
-
-    fail2ban-client version
-
-Please note that the system init/service script is not automatically installed.
-To enable fail2ban as an automatic service, simply copy the script for your
-distro from the `files` directory to `/etc/init.d`. Example (on a Debian-based
-system):
-
-    cp files/debian-initd /etc/init.d/fail2ban
-    update-rc.d fail2ban defaults
-    service fail2ban start
-
-Configuration:
---------------
+### Configuration
 
 You can configure Fail2Ban using the files in `/etc/fail2ban`. It is possible to
 configure the server using commands sent to it by `fail2ban-client`. The
-available commands are described in the fail2ban-client(1) manpage.  Also see
-fail2ban(1) and jail.conf(5)  manpages for further references.
+available commands are described in the fail2ban-client(1) manpage.
 
-Code status:
-------------
-
-* [![CI](https://github.com/fail2ban/fail2ban/actions/workflows/main.yml/badge.svg)](https://github.com/fail2ban/fail2ban/actions/workflows/main.yml)
-
-Contact:
---------
-
-### Bugs, feature requests, discussions?
-See [CONTRIBUTING.md](https://github.com/fail2ban/fail2ban/blob/master/CONTRIBUTING.md)
-
-### You just appreciate this program:
-Send kudos to the original author ([Cyril Jaquier](mailto:cyril.jaquier@fail2ban.org))
-or *better* to the [mailing list](https://lists.sourceforge.net/lists/listinfo/fail2ban-users)
-since Fail2Ban is "community-driven" for years now.
-
-Thanks:
--------
-
-See [THANKS](https://github.com/fail2ban/fail2ban/blob/master/THANKS) file.
-
-License:
---------
+### License
 
 Fail2Ban is free software; you can redistribute it and/or modify it under the
 terms of the GNU General Public License as published by the Free Software
 Foundation; either version 2 of the License, or (at your option) any later
 version.
 
-Fail2Ban is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with
-Fail2Ban; if not, write to the Free Software Foundation, Inc., 51 Franklin
-Street, Fifth Floor, Boston, MA 02110, USA
+</details>
 
 ---
 
-## Fork Maintainer
-
-This fork is maintained by **[KCCS](https://kccsonline.com)** with custom web UI enhancements and monitoring integrations.
-
-*[kccsonline.com](https://kccsonline.com)*
+Developed by **[KCCS](https://kccsonline.com)** | Dashboard by [@pueblokc](https://github.com/pueblokc) | [kccsonline.com](https://kccsonline.com)
